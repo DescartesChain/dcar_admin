@@ -51,7 +51,8 @@ export default {
       name: '', // 用户名
       password: '', // 密码
       codeText: '', // 验证码
-      authenticationService: AuthenticationService
+      authenticationService: AuthenticationService,
+      storage: {}
     }
   },
   mounted () {
@@ -93,6 +94,8 @@ export default {
             console.log(results)
             if (results.data.success) {
               this.$toaster.success('登录成功')
+              localStorage.setItem('userid', results.data.data.id)
+              localStorage.setItem('token', results.data.data.token)
               let that = this
               setTimeout(() => {
                 that.$router.push({

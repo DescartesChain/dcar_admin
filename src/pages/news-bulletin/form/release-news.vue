@@ -3,12 +3,15 @@
   <div class="release-news">
     <div class="news_main">
       <div class="row">
-        <label class="col-md-2">类型</label>
+        <label class="col-md-2">
+          <span class="text-danger">*</span>
+          类型
+        </label>
         <div class="col-md-7">
-          <select class="form-control own_select">
-            <option>请选择文章类型</option>
-            <option>2</option>
-            <option>3</option>
+          <select class="form-control own_select" @change="chooseCategory($event.target.value)">
+            <option value="">请选择文章类型</option>
+            <option value="1">一级新闻</option>
+            <option value="0">二级新闻</option>
           </select>
         </div>
       </div>
@@ -18,7 +21,7 @@
           标题
         </label>
         <div class="col-md-10">
-          <input type="text" class="form-control" placeholder="请输入文章标题">
+          <input type="text" class="form-control" placeholder="请输入文章标题" v-model="newArray.title">
         </div>
       </div>
       <div class="row">
@@ -51,19 +54,20 @@
           正文
         </label>
         <div class="col-md-10">
-          <textarea rows="5" placeholder="请输入文章内容" class="new_text"></textarea>
+          <textarea rows="5" placeholder="请输入文章内容" class="new_text" v-model="newArray.content"></textarea>
         </div>
       </div>
     </div>
     <div slot="modal-footer" class="w-100 modal_footer">
-      <button class="btn modal_sure">发布</button>
-      <button class="btn modal_sure">保存</button>
+      <button class="btn modal_sure" @click="createNew(1)">发布</button>
+      <button class="btn modal_sure" @click="createNew(0)">保存</button>
       <button class="btn modal_cancel" v-if="this.message.state == 'alter'">关闭</button>
     </div>
   </div>
 </template>
 
 <script>
+import PostService from '@/service/post/PostService'
 export default {
   name: 'ReleaseNews',
   props: {
@@ -71,9 +75,53 @@ export default {
   },
   data () {
     return {
+      postService: PostService,
+      newArray: {
+        title: '', // 标题
+        content: '', // 正文内容
+        category: '', // 分类： 1 表示一级新闻， 0:二级新闻，默认为0
+        banner: '', // 图片，如果使用 category 的值为 1，必须赋值
+        status: '', // 状态
+        author: localStorage.getItem('userid')
+      }
     }
   },
   methods: {
+    // 选择新闻公告类型
+    chooseCategory (category) {
+      this.newArray.category = category
+    },
+    // 创建新公告
+    createNew (state) {
+      this.newArray.status = state // 状态
+      console.log(this.newArray)
+      if (this.newArray.category == '') {
+        this.$toaster.error('请选择文章类型')
+        return false
+      }
+      if (this.newArray.title == '') {
+        this.$toaster.error('请填写文章标题')
+        return false
+      }
+      if (this.newArray.content == '') {
+        this.$toaster.error('请填写文章内容')
+        return false
+      }
+      if (this.newArray.category == 1 && this.newArray.banner == '') {
+        this.$toaster.error('请上传封面照片')
+        return false
+      }
+      this.postService.createNew(
+        this.newArray
+      ).then((results) => {
+        if (results.data.success) {
+          this.$toaster.success('创建成功')
+          this.$emit('child-say', {backData: results.data.data, backState: 'success'})
+        } else {
+          this.$toaster.error('创建失败')
+        }
+      })
+    }
   }
 }
 </script>

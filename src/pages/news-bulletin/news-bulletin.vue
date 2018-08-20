@@ -60,79 +60,23 @@
       <div class="news_content">
         <b-container class="bv-example-row" fluid>
           <b-row>
-            <b-col cols="12" sm="12" md="12" lg="6" xl="4" align-self="start">
-
+            <b-col cols="12" sm="12" md="12" lg="6" xl="4" align-self="start" v-for="postInfo in postList" :key="postInfo._id">
               <div class="news_term">
-                <span class="label" v-if="label">
-        草稿
-        </span>
+                <span class="label" v-if="postInfo.status == 1">已发布</span>
+                <span class="label" v-if="postInfo.status == 0">草稿</span>
                 <div class="pic">
                   <img src="../../assets/img/news-bulletin/news_1.jpg" />
                 </div>
                 <div class="text">
                   <div class="headline">
-                    <p class="topic">新闻标题</p>
+                    <p class="topic">{{postInfo.title}}</p>
                     <p class="scan">
                       <img @click="showAlertModal('shield')" v-if="visible" src="../../assets/img/news-bulletin/eye_open.png" />
                       <img @click="showAlertModal('visible')" v-else src="../../assets/img/news-bulletin/eye_close.png" />
                       <span>700</span>
                     </p>
                   </div>
-                  <p class="info">正文正文我是正文正文我是正文正文我是正文正文我是正文正文我是正文正文我是正文正文我是正文正文我是正文正文</p>
-                  <div class="handle">
-                    <span class="time">2018-06-13  09:11:55</span>
-                    <p class="btn">
-                      <span class="editor" @click="showNewsModal('alter')">编辑</span>
-                      <span class="line"></span>
-                      <span class="delete" @click="showAlertModal('delete')">删除</span>
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </b-col>
-            <b-col cols="12" sm="12" md="12" lg="6" xl="4" align-self="start">
-              <div class="news_term">
-                <span class="label" v-if="label">草稿</span>
-                <div class="pic">
-                  <img src="../../assets/img/news-bulletin/news_1.jpg" />
-                </div>
-                <div class="text">
-                  <div class="headline">
-                    <p class="topic">新闻标题</p>
-                    <p class="scan">
-                      <img @click="showAlertModal('shield')" v-if="visible" src="../../assets/img/news-bulletin/eye_open.png" />
-                      <img @click="showAlertModal('visible')" v-else src="../../assets/img/news-bulletin/eye_close.png" />
-                      <span>700</span>
-                    </p>
-                  </div>
-                  <p class="info">正文正文我是正文正文我是正文正文我是正文正文我是正文正文我是正文正文我是正文正文我是正文正文我是正文正文</p>
-                  <div class="handle">
-                    <span class="time">2018-06-13  09:11:55</span>
-                    <p class="btn">
-                      <span class="editor" @click="showNewsModal('alter')">编辑</span>
-                      <span class="line"></span>
-                      <span class="delete" @click="showAlertModal('delete')">删除</span>
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </b-col>
-            <b-col cols="12" sm="12" md="12" lg="6" xl="4" align-self="start">
-              <div class="news_term">
-                <span class="label" v-if="label">草稿</span>
-                <div class="pic">
-                  <img src="../../assets/img/news-bulletin/news_1.jpg" />
-                </div>
-                <div class="text">
-                  <div class="headline">
-                    <p class="topic">新闻标题</p>
-                    <p class="scan">
-                      <img @click="showAlertModal('shield')" v-if="visible" src="../../assets/img/news-bulletin/eye_open.png" />
-                      <img @click="showAlertModal('visible')" v-else src="../../assets/img/news-bulletin/eye_close.png" />
-                      <span>700</span>
-                    </p>
-                  </div>
-                  <p class="info">正文正文我是正文正文我是正文正文我是正文正文我是正文正文我是正文正文我是正文正文我是正文正文我是正文正文</p>
+                  <p class="info">{{postInfo.content}}</p>
                   <div class="handle">
                     <span class="time">2018-06-13  09:11:55</span>
                     <p class="btn">
@@ -176,7 +120,7 @@
       </div>
       <!-- 模态框 发布新闻-->
       <b-modal ref="releaseNews" hide-footer :title="modalTitle">
-        <release-news :message="data" @close-modal='closeNewsModal'></release-news>
+        <release-news :message="data" @close-modal='closeNewsModal' @child-say="listenToChild"></release-news>
       </b-modal>
       <!--提示-->
       <b-modal ref="alertNews" hide-footer :title="alertModalTitle">
@@ -191,11 +135,12 @@ import ReleaseNews from './form/release-news'
 import Alert from './form/alert'
 import Datepicker from 'vuejs-datepicker'
 import {en, zh} from 'vuejs-datepicker/dist/locale'
+import PostService from '@/service/post/PostService'
 export default {
   name: 'NewsBulletin',
   data () {
     return {
-      label: false,
+      // label: false,
       ins: 0,
       flag: 0,
       visible: false,
@@ -205,7 +150,10 @@ export default {
       alertModalTitle: '',
       alertModalContent: '',
       en: en,
-      zh: zh
+      zh: zh,
+      postService: PostService,
+      newState: '',
+      postList: []
     }
   },
   components: {
@@ -214,7 +162,30 @@ export default {
     Alert,
     Datepicker
   },
+  created () {
+    this.loadPostList() // 获取所有公告信息
+  },
   methods: {
+    // 接收 发布公告传来的值
+    listenToChild (emit) {
+      this.newState = emit.backState
+      if (this.newState == 'success') {
+        this.$refs.releaseNews.hide()
+        this.postList.push(emit.backData)
+        console.log(this.postList)
+      }
+    },
+    // 获取所有公告信息
+    loadPostList () {
+      this.postService.loadPostList({}).then((results) => {
+        if (results.data.success) {
+          this.postList = results.data.data
+        } else {
+          this.$toaster.error(results.data.msg)
+        }
+      })
+    },
+
     active (num) {
       this.ins = num
     },

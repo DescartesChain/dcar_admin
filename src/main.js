@@ -27,8 +27,6 @@ import './assets/styles/iconfont/iconfont.css'
 
 import '@/assets/styles/global.css'
 
-Vue.use(Toaster, {timeout: 5000})
-
 // import '../node_modules/vue-toaseter/src/vue-toaster.css'
 library.add(fas, far, fab)
 Vue.component('font-awesome-icon', FontAwesomeIcon)

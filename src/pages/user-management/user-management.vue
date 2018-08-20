@@ -105,7 +105,7 @@
               <td class="text-center">操作</td>
             </tr>
           </thead>
-          <tbody>
+          <tbody v-if="userList.length > 0">
             <tr v-for="userInfo in userList" :key="userInfo._id">
               <td class="text-center">{{userInfo.name}}</td>
               <td class="text-center">{{userInfo.email}}</td>
@@ -113,6 +113,13 @@
               <td class="text-center">2018-12-11 12:22</td>
               <td class="text-center">
                 <img @click="showModal" src="~@/assets/img/user-management/see.png">
+              </td>
+            </tr>
+          </tbody>
+          <tbody v-if="userList.length == 0">
+            <tr>
+              <td colspan="5" class="no_data">
+                暂无用户
               </td>
             </tr>
           </tbody>
