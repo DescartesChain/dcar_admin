@@ -7,7 +7,7 @@
           数量
         </div>
         <div class="col-md-7">
-          <input type="text" class="form-control" placeholder="请输入兑换码数量">
+          <input type="text" class="form-control" placeholder="请输入兑换码数量" v-model="createInfo.amount">
         </div>
       </div>
       <div class="row">
@@ -15,19 +15,20 @@
           次数
         </div>
         <div class="col-md-7">
-          <input type="text" class="form-control" placeholder="请设置兑换码使用次数">
+          <input type="text" class="form-control" placeholder="请设置兑换码使用次数" v-model="createInfo.quantity">
         </div>
       </div>
     </div>
     <div slot="modal-footer" class="w-100 modal_footer">
-      <button class="btn modal_sure">保存</button>
-      <button class="btn modal_sure">保存并新增</button>
+      <button class="btn modal_sure" @click="createVoucher('finish')">保存</button>
+      <button class="btn modal_sure" @click="createVoucher('add')">保存并新增</button>
       <button class="btn modal_cancel">关闭</button>
     </div>
   </div>
 </template>
 
 <script>
+import VoucherService from '@/service/voucher/VoucherService'
 export default {
   name: 'AddCode',
   props: {
@@ -35,9 +36,31 @@ export default {
   },
   data () {
     return {
+      voucherService: VoucherService,
+      createInfo: {
+        'amount': '',
+        'quantity': ''
+      }
     }
   },
   methods: {
+    // 批量创建兑换码   参数： amount--生成多少张兑换码(Number) / quantity--一张兑换码可以兑换多少产品(Number)
+    createVoucher (state) {
+      this.voucherService.createVoucher(
+        this.createInfo
+      ).then((results) => {
+        if (results.data.success) {
+          this.$toaster.success('新增成功')
+          this.$emit('child-say', {backData: results.data.data, state: state})
+          this.createInfo = {
+            'amount': '',
+            'quantity': ''
+          }
+        } else {
+          this.$toaster.error(results.data.msg)
+        }
+      })
+    }
   }
 }
 </script>

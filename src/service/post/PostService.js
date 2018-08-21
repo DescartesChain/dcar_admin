@@ -13,8 +13,18 @@ const PostService = {
   },
 
   // 根据 id 更新公告
-  updateNew: (info) => {
-    return axios.post(CurrentInterface + 'post/' + localStorage.getItem('userid'), info)
+  updateNew: (id, info) => {
+    return axios.put(CurrentInterface + 'post/' + id, info)
+  },
+
+  // 根据 id 查找公告
+  seekNew: (info) => {
+    return axios.get(CurrentInterface + 'post/' + info)
+  },
+
+  // 根据 id 删除公告
+  deleteNew: (info) => {
+    return axios.delete(CurrentInterface + 'post/' + info)
   }
 
 }

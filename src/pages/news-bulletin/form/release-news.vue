@@ -9,9 +9,8 @@
         </label>
         <div class="col-md-7">
           <select class="form-control own_select" @change="chooseCategory($event.target.value)">
-            <option value="">请选择文章类型</option>
-            <option value="1">一级新闻</option>
-            <option value="0">二级新闻</option>
+            <option value="1" :selected="newArray.category == 1">一级新闻</option>
+            <option value="0" :selected="newArray.category == 0">二级新闻</option>
           </select>
         </div>
       </div>
@@ -59,9 +58,9 @@
       </div>
     </div>
     <div slot="modal-footer" class="w-100 modal_footer">
-      <button class="btn modal_sure" @click="createNew(1)">发布</button>
-      <button class="btn modal_sure" @click="createNew(0)">保存</button>
-      <button class="btn modal_cancel" v-if="this.message.state == 'alter'">关闭</button>
+      <button class="btn modal_sure" @click="operateNew(1)">发布</button>
+      <button class="btn modal_sure" @click="operateNew(0)">保存</button>
+      <button class="btn modal_cancel" v-if="this.message.state == 'alter'" @click="cancel">关闭</button>
     </div>
   </div>
 </template>
@@ -79,48 +78,102 @@ export default {
       newArray: {
         title: '', // 标题
         content: '', // 正文内容
-        category: '', // 分类： 1 表示一级新闻， 0:二级新闻，默认为0
+        category: 0, // 分类： 1 表示一级新闻， 0:二级新闻，默认为0
         banner: '', // 图片，如果使用 category 的值为 1，必须赋值
         status: '', // 状态
-        author: localStorage.getItem('userid')
+        author: localStorage.getItem('userid'),
+        postId: ''
       }
     }
   },
   methods: {
+    // 根据 id 查找公告
+    seekNew (id) {
+      this.postId = id
+      this.postService.seekNew(id).then((results) => {
+        if (results.data.success) {
+          this.newArray = results.data.data
+        } else {
+          this.$toaster.error(results.data.msg)
+        }
+      })
+    },
     // 选择新闻公告类型
     chooseCategory (category) {
       this.newArray.category = category
     },
-    // 创建新公告
-    createNew (state) {
+    // 新增/编辑
+    operateNew (state) {
       this.newArray.status = state // 状态
       console.log(this.newArray)
-      if (this.newArray.category == '') {
+      if (this.newArray.category === '') {
         this.$toaster.error('请选择文章类型')
         return false
       }
-      if (this.newArray.title == '') {
+      if (this.newArray.title === '') {
         this.$toaster.error('请填写文章标题')
         return false
       }
-      if (this.newArray.content == '') {
+      if (this.newArray.content === '') {
         this.$toaster.error('请填写文章内容')
         return false
       }
-      if (this.newArray.category == 1 && this.newArray.banner == '') {
+      if (this.newArray.category === 1 && this.newArray.banner === '') {
         this.$toaster.error('请上传封面照片')
         return false
       }
+      if (this.message.state == 'add') {
+        this.createPost() // 创建新公告
+      } else {
+        this.alterPost() // 根据 id 更新公告 修改
+      }
+    },
+    // 创建新公告
+    createPost () {
       this.postService.createNew(
         this.newArray
       ).then((results) => {
         if (results.data.success) {
           this.$toaster.success('创建成功')
-          this.$emit('child-say', {backData: results.data.data, backState: 'success'})
+          this.$emit('child-say', {backData: results.data.data, backState: 'createSuccess'})
+          this.newArray = {
+            title: '', // 标题
+            content: '', // 正文内容
+            category: 0, // 分类： 1 表示一级新闻， 0:二级新闻，默认为0
+            banner: '', // 图片，如果使用 category 的值为 1，必须赋值
+            status: '', // 状态
+            author: localStorage.getItem('userid')
+          }
         } else {
           this.$toaster.error('创建失败')
         }
       })
+    },
+    // 根据 id 更新公告 修改
+    alterPost () {
+      this.postService.updateNew(
+        this.postId,
+        this.newArray
+      ).then((results) => {
+        if (results.data.success) {
+          this.$toaster.success('编辑成功')
+          this.$emit('child-say', {backData: results.data.data, backState: 'alterSuccess', id: this.postId})
+          this.newArray = {
+            title: '', // 标题
+            content: '', // 正文内容
+            category: 0, // 分类： 1 表示一级新闻， 0:二级新闻，默认为0
+            banner: '', // 图片，如果使用 category 的值为 1，必须赋值
+            status: '', // 状态
+            author: localStorage.getItem('userid')
+          }
+        } else {
+          this.$toaster.error(results.data.msg)
+        }
+      })
+    },
+    // 关闭模态框
+    cancel () {
+      this.$emit('child-say', {})
     }
   }
 }

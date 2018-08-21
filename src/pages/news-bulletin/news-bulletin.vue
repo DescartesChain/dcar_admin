@@ -58,7 +58,8 @@
       </div>
       <!--主要内容-->
       <div class="news_content">
-        <b-container class="bv-example-row" fluid>
+        <p v-if="postList.length==0" class="noData">暂无新闻公告</p>
+        <b-container class="bv-example-row" fluid v-if="postList.length>0">
           <b-row>
             <b-col cols="12" sm="12" md="12" lg="6" xl="4" align-self="start" v-for="postInfo in postList" :key="postInfo._id">
               <div class="news_term">
@@ -80,9 +81,9 @@
                   <div class="handle">
                     <span class="time">2018-06-13  09:11:55</span>
                     <p class="btn">
-                      <span class="editor" @click="showNewsModal('alter')">编辑</span>
+                      <span class="editor" @click="showNewsModal('alter',postInfo)">编辑</span>
                       <span class="line"></span>
-                      <span class="delete" @click="showAlertModal('delete')">删除</span>
+                      <span class="delete" @click="showAlertModal('delete',postInfo)">删除</span>
                     </p>
                   </div>
                 </div>
@@ -120,11 +121,11 @@
       </div>
       <!-- 模态框 发布新闻-->
       <b-modal ref="releaseNews" hide-footer :title="modalTitle">
-        <release-news :message="data" @close-modal='closeNewsModal' @child-say="listenToChild"></release-news>
+        <release-news ref="editUser" :message="data" @close-modal='closeNewsModal' @child-say="listenToChild"></release-news>
       </b-modal>
       <!--提示-->
       <b-modal ref="alertNews" hide-footer :title="alertModalTitle">
-        <alert :message="order" @close-modal='closeAlertModal'>{{alertModalContent}}</alert>
+        <alert :message="order" @close-modal='closeAlertModal' @child-say="listenToOperate">{{alertModalContent}}</alert>
       </b-modal>
     </div>
   </div>
@@ -168,11 +169,28 @@ export default {
   methods: {
     // 接收 发布公告传来的值
     listenToChild (emit) {
+      this.$refs.releaseNews.hide()
       this.newState = emit.backState
-      if (this.newState == 'success') {
-        this.$refs.releaseNews.hide()
+      if (this.newState == 'createSuccess') {
         this.postList.push(emit.backData)
-        console.log(this.postList)
+      } else if (this.newState == 'alterSuccess') {
+        for (var i = 0; i < this.postList.length; i++) {
+          if (this.postList[i]._id == emit.id) {
+            this.postList.splice(i, 1, emit.backData)
+          }
+        }
+      }
+    },
+    // 接收 操作公告传来的值   （删除、屏蔽、展示）
+    listenToOperate (emit) {
+      this.$refs.alertNews.hide()
+      this.newState = emit.backState
+      if (this.newState == 'deleteSuccess') {
+        for (var i = 0; i < this.postList.length; i++) {
+          if (this.postList[i]._id == emit.id) {
+            this.postList.splice(i, 1)
+          }
+        }
       }
     },
     // 获取所有公告信息
@@ -193,22 +211,23 @@ export default {
       this.flag = num
     },
     // 模态框 发布新闻
-    showNewsModal (state) {
+    showNewsModal (state, postInfo) {
       this.$refs.releaseNews.show()
       if (state === 'add') {
         this.modalTitle = '发布新闻'
       } else {
         this.modalTitle = '编辑新闻'
+        this.$refs.editUser.seekNew(postInfo._id)
       }
       this.data = {
-        state: state
+        state: state // 发布/编辑
       }
     },
     closeNewsModal () {
       this.$refs.releaseNews.hide()
     },
     // 模态框 提示
-    showAlertModal (state) {
+    showAlertModal (state, postInfo) {
       this.$refs.alertNews.show()
       if (state === 'delete') {
         this.alertModalTitle = '删除'
@@ -223,7 +242,8 @@ export default {
         this.alertModalContent = '确定要开启此新闻吗？开启后新闻将对所有用户开放浏览'
       }
       this.order = {
-        state: 'state'
+        state: state,
+        postId: postInfo._id
       }
     },
     closeAlertModal () {

@@ -87,11 +87,11 @@
                 <td class="text-center">操作</td>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td class="text-center">1</td>
-                <td class="text-center">2525-SHJSH-K222</td>
-                <td class="text-center">2</td>
+            <tbody v-if="codeList.length>0">
+              <tr v-for="(codeInfo, index) in codeList" :key="codeInfo._id">
+                <td class="text-center">{{index+1}}</td>
+                <td class="text-center">{{codeInfo.code}}</td>
+                <td class="text-center">{{codeInfo.quantity}}</td>
                 <td class="text-center">2018-12-11 12:22</td>
                 <td class="text-center">啦啦啦</td>
                 <td class="text-center">
@@ -100,6 +100,13 @@
                 </td>
               </tr>
             </tbody>
+            <tbody v-if="codeList.length == 0">
+              <tr>
+                <td colspan="5" class="no_data">
+                  暂无兑换码
+                </td>
+              </tr>
+          </tbody>
           </table>
         </div>
         <!-- 分页部分 -->
@@ -134,7 +141,7 @@
         <!-- 分页end -->
         <!-- 模态框 新增兑换码-->
         <b-modal ref="addCode" hide-footer title="新增兑换码">
-          <add-code :message="data" @close-modal = 'closeAddModal'></add-code>
+          <add-code :message="data" @close-modal = 'closeAddModal' @child-say="listenToChild"></add-code>
         </b-modal>
         <!-- 模态框 修改兑换码-->
         <b-modal ref="AlterCode" hide-footer title="修改兑换码">
@@ -175,18 +182,30 @@ export default {
       data: {},
       en: en,
       zh: zh,
-      voucherService: VoucherService
+      voucherService: VoucherService,
+      codeList: []
     }
   },
   created () {
     this.loadVoucherList() // 获取所有兑换码
   },
   methods: {
+    // 接收子组件的值 新增兑换码
+    listenToChild (emit) {
+      if (emit.state == 'finish') {
+        this.$refs.addCode.hide()
+      }
+      for (var i = 0; i < emit.backData.length; i++) {
+        this.codeList.push(emit.backData[i])
+      }
+    },
     // 获取所有兑换码
     loadVoucherList () {
       this.voucherService.loadVoucherList({}).then((results) => {
         if (results.data.success) {
-          this.$toaster.success('调用成功')
+          this.codeList = results.data.data
+        } else {
+          this.$toaster.error(results.data.success)
         }
       })
     },
