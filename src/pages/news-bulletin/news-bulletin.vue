@@ -201,7 +201,7 @@ export default {
         } else {
           this.$toaster.error(results.data.msg)
         }
-      })
+      })       
     },
 
     active (num) {

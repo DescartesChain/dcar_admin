@@ -1,16 +1,16 @@
 <template>
-  <div class="user_detail">
+  <div class="user_detail" v-if="showData">
     <div class="detail">
       <div class="head_port"></div>
       <div class="user_main">
         <h5 class="user_name">
-          用户旺财666
+          {{userDetailInfo.name}}
           <img src="~@/assets/img/user-management/10.png">
         </h5>
         <ul>
           <li>
             <p>邮箱：</p>
-            <p>123456789@qq.com</p>
+            <p>{{userDetailInfo.email}}</p>
           </li>
           <li>
             <p>微信：</p>
@@ -52,6 +52,7 @@
 
 <script>
 import ToggleSwitch from '@/components/toggle-switch'
+import UserService from '@/service/user/UserService'
 export default {
   name: 'UserDetail',
   components: {
@@ -64,10 +65,24 @@ export default {
     return {
       state: 0,
       shut: true,
-      open: false
+      open: false,
+      userService: UserService,
+      showData: false,
+      userDetailInfo: {}
     }
   },
   methods: {
+    // 根据用户 id 查找用户信息
+    getUserDetail (id) {
+      this.userService.getUserDetail(id).then((results) => {
+        if (results.data.success) {
+          this.userDetailInfo = results.data.data
+          this.showData = true
+        } else {
+          this.$toaster.error(results.data.msg)
+        }
+      })
+    },
     // 模态框确定
     confirm () {
       this.$refs.myModalRef.hide()

@@ -1,7 +1,7 @@
 // 订单详情
 <template>
   <div class="order_details">
-    <div class="details_main">
+    <div class="details_main" v-if="showData">
       <!-- 订单信息 -->
       <div class="order_body">
         <p class="border_title">
@@ -12,7 +12,7 @@
           <div class="row">
             <div class="col-md-7">
               <span>订单号：</span>
-              4152556655888525
+              {{orderDetailInfo._id}}
             </div>
             <div class="col-md-5">
               <span>下单时间：</span>
@@ -22,33 +22,36 @@
           <div class="row">
             <div class="col-md-7">
               <span>商品名称：</span>
-              我是商品名称
+              <p>{{orderDetailInfo.product.name}}</p>
             </div>
             <div class="col-md-5">
               <span>商品数量：</span>
-              5
+              {{orderDetailInfo.product.discount}}
             </div>
           </div>
           <div class="row">
             <div class="col-md-7">
               <span>支付方式：</span>
-              兑换码
+              <p v-if="orderDetailInfo.pay == 0">兑换码</p>
+              <p v-if="orderDetailInfo.pay == 1">ETH</p>
             </div>
           </div>
           <div class="row">
             <div class="col-md-7">
               <span>收货人：</span>
-              啦啦啦
+              <p v-if="orderDetailInfo.shipAddress != null">{{orderDetailInfo.shipAddress.receiver}}</p>
             </div>
             <div class="col-md-5">
               <span>联系方式：</span>
-              15625536666
+              <p v-if="orderDetailInfo.shipAddress != null">{{orderDetailInfo.shipAddress.phone}}</p>
             </div>
           </div>
           <div class="row">
             <div class="col-md-12">
               <span>收货地址：</span>
-              河南省郑州市郑东新区XX号XX大厦3楼
+              <p v-if="orderDetailInfo.shipAddress != null">
+                {{orderDetailInfo.shipAddress.province}}{{orderDetailInfo.shipAddress.city}}{{orderDetailInfo.shipAddress.district}}{{orderDetailInfo.shipAddress.street}}
+              </p>
             </div>
           </div>
         </div>
@@ -131,6 +134,7 @@
 </template>
 
 <script>
+import OrderService from '@/service/order/OrderService'
 export default {
   name: 'OrderDetails',
   props: {
@@ -138,9 +142,23 @@ export default {
   },
   data () {
     return {
+      orderService: OrderService,
+      orderDetailInfo: {},
+      showData: false
     }
   },
   methods: {
+    // 根据 id 查找订单信息
+    getOrderDetail (id) {
+      this.orderService.getOrderDetail(id).then((results) => {
+        if (results.data.success) {
+          this.orderDetailInfo = results.data.data
+          this.showData = true
+        } else {
+          this.$toaster.error(results.data.msg)
+        }
+      })
+    }
   }
 }
 </script>
@@ -172,6 +190,9 @@ export default {
 .order_main>div>div>span{
   font-weight: bold;
   padding-right:15px;
+}
+.order_main>div>div>p{
+  display: inline-block;
 }
 .logistics_body{
   background: #F0F3F8;

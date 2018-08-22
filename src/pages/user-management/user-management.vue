@@ -112,7 +112,7 @@
               <td class="text-center">2018-12-11 12:22</td>
               <td class="text-center">2018-12-11 12:22</td>
               <td class="text-center">
-                <img @click="showModal" src="~@/assets/img/user-management/see.png">
+                <img @click="showModal(userInfo._id)" src="~@/assets/img/user-management/see.png">
               </td>
             </tr>
           </tbody>
@@ -157,7 +157,7 @@
       <!-- 分页end -->
       <!-- 模态框 用户详情-->
       <b-modal ref="myModalRef" title="用户详情" hide-footer size="lm">
-        <user-detail :message="modalData" @close-modal = 'closeModal'></user-detail>
+        <user-detail ref="seekDetail" :message="modalData" @close-modal = 'closeModal'></user-detail>
       </b-modal>
       <!-- 模态框end -->
     </div>
@@ -234,8 +234,9 @@ export default {
       this.currentYear = num
       this.year = false
     },
-    showModal () {
+    showModal (id) {
       this.$refs.myModalRef.show()
+      this.$refs.seekDetail.getUserDetail(id)
     },
     // 关闭模态框
     closeModal () {

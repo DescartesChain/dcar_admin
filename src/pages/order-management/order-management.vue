@@ -64,85 +64,33 @@
                 <td class="text-center">操作</td>
               </tr>
             </thead>
-            <tbody>
-              <tr>
+            <tbody v-if="orderList.length > 0">
+              <tr v-for="(orderInfo, index) in orderList" :key="orderInfo._id">
                 <td class="text-center check_td">
                   <b-form-checkbox id="checkbox1" v-model="status" value="accepted" unchecked-value="not_accepted" class="check_box"></b-form-checkbox>
-                  1
+                  {{index+1}}
                 </td>
-                <td class="text-center" @click="showDetails">4154545646777</td>
+                <td class="text-center" @click="showDetails(orderInfo._id)">{{orderInfo._id}}</td>
                 <td class="text-center">2018-12-11 12:22</td>
                 <td class="text-center">
                   <span class="state_one">待发货</span>
                   <!-- <span class="state_two">待收货</span> -->
                   <!-- <span>已完成</span> -->
                 </td>
-                <td class="text-center">旺财</td>
+                <td class="text-center" v-if="orderInfo.customer !== null">{{orderInfo.customer.name}}</td>
+                <td class="text-center" v-if="orderInfo.customer == null">无</td>
                 <td class="text-center">
                   <button class="confirm_delivery" @click="showModal">确认发货</button>
                   <!-- <button class="cofirm_receipt">确认收货</button> -->
-                  <!-- <button class="cofirm_receipt">运输中</button> -->
-                  <!-- <button class="finished">已完成</button> -->
+                  <!-- <button class="cofirm_receipt" @click="alertModal('doing')">运输中</button> -->
+                  <!-- <button class="finished" @click="alertModal('did')">已完成</button> -->
                 </td>
               </tr>
+            </tbody>
+            <tbody v-if="orderList.length == 0">
               <tr>
-                <td class="text-center check_td">
-                  <b-form-checkbox id="checkbox1" v-model="status" value="accepted" unchecked-value="not_accepted" class="check_box"></b-form-checkbox>
-                  1
-                </td>
-                <td class="text-center">4154545646777</td>
-                <td class="text-center">2018-12-11 12:22</td>
-                <td class="text-center">
-                  <span class="state_one">待发货</span>
-                  <!-- <span class="state_two">待收货</span> -->
-                  <!-- <span>已完成</span> -->
-                </td>
-                <td class="text-center">旺财</td>
-                <td class="text-center">
-                  <!-- <button class="confirm_delivery" @click="showModal">确认发货</button> -->
-                  <button class="cofirm_receipt">确认收货</button>
-                  <!-- <button class="cofirm_receipt">运输中</button> -->
-                  <!-- <button class="finished">已完成</button> -->
-                </td>
-              </tr>
-              <tr>
-                <td class="text-center check_td">
-                  <b-form-checkbox id="checkbox1" v-model="status" value="accepted" unchecked-value="not_accepted" class="check_box"></b-form-checkbox>
-                  1
-                </td>
-                <td class="text-center">4154545646777</td>
-                <td class="text-center">2018-12-11 12:22</td>
-                <td class="text-center">
-                  <span class="state_one">待发货</span>
-                  <!-- <span class="state_two">待收货</span> -->
-                  <!-- <span>已完成</span> -->
-                </td>
-                <td class="text-center">旺财</td>
-                <td class="text-center">
-                  <!-- <button class="confirm_delivery" @click="showModal">确认发货</button> -->
-                  <!-- <button class="cofirm_receipt">确认收货</button> -->
-                  <button class="cofirm_receipt" @click="alertModal('doing')">运输中</button>
-                  <!-- <button class="finished">已完成</button> -->
-                </td>
-              </tr>
-              <tr>
-                <td class="text-center check_td">
-                  <b-form-checkbox id="checkbox1" v-model="status" value="accepted" unchecked-value="not_accepted" class="check_box"></b-form-checkbox>
-                  1
-                </td>
-                <td class="text-center">4154545646777</td>
-                <td class="text-center">2018-12-11 12:22</td>
-                <td class="text-center">
-                  <span class="state_one">待发货</span>
-                  <!-- <span class="state_two">待收货</span> -->
-                  <!-- <span>已完成</span> -->
-                </td>
-                <td class="text-center">旺财</td>
-                <td class="text-center">
-                  <!-- <button class="confirm_delivery" @click="showModal">确认发货</button> -->
-                  <!-- <button class="cofirm_receipt">确认收货</button> -->
-                  <!-- <button class="cofirm_receipt">运输中</button> -->
-                  <button class="finished" @click="alertModal('did')">已完成</button>
+                <td colspan="6" class="no_data">
+                  暂无订单
                 </td>
               </tr>
             </tbody>
@@ -196,7 +144,7 @@
         </b-modal>
         <!-- 模态框 订单详情-->
         <b-modal ref="orderDetails" hide-footer size="lg" title="订单详情">
-          <order-details :message="data" @close-modal = 'closeDetailsModal'></order-details>
+          <order-details ref="getDetail" :message="data" @close-modal = 'closeDetailsModal'></order-details>
         </b-modal>
         <!-- 模态框 提示-->
         <b-modal ref="alertModal" hide-footer size="sm" title="提示">
@@ -230,7 +178,8 @@ export default {
       data: {},
       en: en,
       zh: zh,
-      orderService: OrderService
+      orderService: OrderService,
+      orderList: []
     }
   },
   created () {
@@ -241,7 +190,12 @@ export default {
     loadOrderList () {
       this.orderService.loadOrderList({}).then((results) => {
         if (results.data.success) {
-          this.$toaster.success('调用成功')
+          this.orderList = results.data.data
+          if (this.orderList == null) {
+            this.orderList = []
+          }
+        } else {
+          this.$toaster.error(results.data.msg)
         }
       })
     },
@@ -258,10 +212,11 @@ export default {
     },
 
     // 模态框--订单详情
-    showDetails () {
+    showDetails (id) {
       this.$refs.orderDetails.show()
+      this.$refs.getDetail.getOrderDetail(id)
       this.data = {
-        state: 'state'
+        orderId: id
       }
     },
     // 关闭模态框
