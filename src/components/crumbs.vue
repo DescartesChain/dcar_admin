@@ -10,6 +10,7 @@ export default {
   name: 'Crumbs'
 }
 </script>
+
 <style lang="scss" scoped>
 .crumbs {
   height: 80px;
