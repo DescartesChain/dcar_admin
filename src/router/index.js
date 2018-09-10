@@ -10,6 +10,7 @@ import OperationLog from '@/pages/operation-log/operation-log' // 操作日志
 import NewsBulletin from '@/pages/news-bulletin/news-bulletin' // 新闻公告
 Vue.use(Router)
 
+// 路由列表
 export default new Router({
   // mode: 'history',
   routes: [{
